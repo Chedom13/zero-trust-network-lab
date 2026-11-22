@@ -1,0 +1,14 @@
+# Two zones: the HR application (protected) and the corporate user zone
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hr
+  labels:
+    zone: hr
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: corp
+  labels:
+    zone: corp

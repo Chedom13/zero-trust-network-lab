@@ -1,0 +1,24 @@
+# Allow every hr pod to resolve names via cluster DNS (kube-dns) only.
+# The "dns" rule sends lookups through Cilium's DNS proxy, which makes
+# every query visible in Hubble and enables FQDN egress rules (Part 7).
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-dns-visible
+  namespace: hr
+spec:
+  endpointSelector: {}
+  egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"

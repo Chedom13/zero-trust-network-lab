@@ -1,0 +1,22 @@
+# A user workstation in the corporate zone. In Part 8 it plays the role of
+# a compromised endpoint that an attacker uses to move laterally.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: workstation
+  namespace: corp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: workstation
+  template:
+    metadata:
+      labels:
+        app: workstation
+        role: workstation
+    spec:
+      containers:
+        - name: shell
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]

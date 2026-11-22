@@ -1,0 +1,114 @@
+# Three-tier "HR Portal": frontend (web) -> api (app) -> db (data).
+# Each pod has a "toolbox" container that shares the pod's network identity,
+# so you can test connections *as* that workload.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: hr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        tier: web
+    spec:
+      containers:
+        - name: web
+          image: nginx:1.27-alpine
+          ports:
+            - containerPort: 80
+        - name: toolbox
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: hr
+spec:
+  selector:
+    app: frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api
+  namespace: hr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+        tier: app
+    spec:
+      containers:
+        - name: api
+          image: hashicorp/http-echo:0.2.3
+          args: ["-listen=:8080", "-text=HR API: employee records service"]
+          ports:
+            - containerPort: 8080
+        - name: toolbox
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api
+  namespace: hr
+spec:
+  selector:
+    app: api
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  namespace: hr
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+        tier: data
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          ports:
+            - containerPort: 6379
+        - name: toolbox
+          image: nicolaka/netshoot:v0.13
+          command: ["sleep", "infinity"]
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  namespace: hr
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 6379
+      targetPort: 6379
